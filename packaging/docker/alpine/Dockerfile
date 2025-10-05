@@ -1,8 +1,12 @@
 FROM docker.io/library/golang:alpine3.22 AS build
-RUN apk add --no-cache build-base git make
+# Install git for `go get`/module support. No need for build-base or make.
+RUN apk add --no-cache git
 ADD . /go/src/app
 WORKDIR /go/src/app
-RUN make miniflux
+# Build a static binary suitable for a minimal runtime image.
+ENV CGO_ENABLED=0
+# Use a simple go build instead of make to avoid requiring host tools or extra make targets.
+RUN go build -ldflags "-s -w" -o miniflux
 
 FROM docker.io/library/alpine:3.22
 
